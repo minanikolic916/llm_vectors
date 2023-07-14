@@ -25,9 +25,18 @@ llm_predictor = LLMPredictor(llm = HuggingFaceHub(
 embed_model = LangchainEmbedding(HuggingFaceEmbeddings())
 service_context = ServiceContext.from_defaults(llm_predictor= llm_predictor, embed_model=embed_model)
 set_global_service_context(service_context)
+file_metadata = lambda x : {"filename": x}
+def find_source(response):
+    max_score = 0
+    source = response.source_nodes[0]
+    for node in response.source_nodes:
+        if node.score > max_score:
+            max_score = node.score
+            source = node
+    return source
 #kreiranje indeksa pri prvom pozivu i updatovanje kasnije
 def load_index(dir_path):
-    documents = SimpleDirectoryReader(dir_path, filename_as_id=True).load_data()
+    documents = SimpleDirectoryReader(dir_path, filename_as_id=True, file_metadata=file_metadata).load_data()
     try:
         storage_context = StorageContext.from_defaults(persist_dir="./storage")
         index = load_index_from_storage(storage_context)
@@ -51,14 +60,15 @@ chat_prompt = st.chat_input("Ask a question")
 #pravljenje template-a za odgovor
 if chat_prompt is not None:
     response = query_engine.query(str(chat_prompt))
-    template = """{answer}. \n".
+    file_source = find_source(response).node.metadata.get('filename')
+    template = """{answer}, from source: {file_source}
     """
-    model_prompt = PromptTemplate(input_variables = ['answer'], template=template)
+    model_prompt = PromptTemplate(input_variables = ['answer', 'file_source'], template=template)
     with st.chat_message("user"):
         st.write(f"Human: {chat_prompt}")
     with st.chat_message("assistant"):
         if response:
-            st.write(f"Assistant: {model_prompt.format(answer = response)}")
+            st.write(f"Assistant: {model_prompt.format(answer = response, file_source = file_source)}")
 
 #prompt = PromptTemplate.from_template(template)
 #print(model_prompt.format(answer = response))
