@@ -6,6 +6,13 @@ from llama_index import LangchainEmbedding
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain import PromptTemplate
 from llama_index import set_global_service_context
+import streamlit as st
+
+#streamlit integracija
+st.title("Sova demo app")
+uploaded_file = st.file_uploader("Choose a file")
+if uploaded_file is not None:
+    st.write("File loaded")
 #odabir modela 
 access_token = "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"
 repo_id = "google/flan-t5-base"
@@ -47,3 +54,4 @@ model_prompt = PromptTemplate(input_variables = ['answer'], template=template)
 
 #prompt = PromptTemplate.from_template(template)
 print(model_prompt.format(answer = response))
+
