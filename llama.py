@@ -8,12 +8,13 @@ from langchain import PromptTemplate
 from llama_index import set_global_service_context
 import streamlit as st
 
-#streamlit integracija
+#file loader 
 st.title("Sova demo app")
 uploaded_file = st.file_uploader("Choose a file")
 if uploaded_file is not None:
     st.write("File loaded")
 
+#temp slider 
 temperature_value = st.slider('Please select the model temperature:', 0.0, 1.0, 0.5)
 st.write('Current temperature:', temperature_value)
 
@@ -28,6 +29,7 @@ llm_predictor = LLMPredictor(llm = HuggingFaceHub(
 embed_model = LangchainEmbedding(HuggingFaceEmbeddings())
 service_context = ServiceContext.from_defaults(llm_predictor= llm_predictor, embed_model=embed_model)
 set_global_service_context(service_context)
+#za nalazenje source-a odakle je response 
 file_metadata = lambda x : {"filename": x}
 def find_source(response):
     max_score = 0
@@ -65,7 +67,7 @@ if chat_prompt is not None:
     response = query_engine.query(str(chat_prompt))
     file_source = find_source(response).node.metadata.get('filename')
     template = """{answer}
-    From source: {file_source}
+    \nFrom source: {file_source}
     """
     model_prompt = PromptTemplate(input_variables = ['answer', 'file_source'], template=template)
     with st.chat_message("user"):
