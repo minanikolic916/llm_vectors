@@ -13,6 +13,7 @@ st.title("Sova demo app")
 uploaded_file = st.file_uploader("Choose a file")
 if uploaded_file is not None:
     st.write("File loaded")
+
 #odabir modela 
 access_token = "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"
 repo_id = "google/flan-t5-base"
@@ -46,12 +47,22 @@ def load_index(dir_path):
 index = load_index('./docs_database')
 query_engine = index.as_query_engine()
 
+chat_prompt = st.chat_input("Ask a question")
 #pravljenje template-a za odgovor
-response = query_engine.query("What are word embeddings used for")
-template = """Answer: {answer}. \nIf the question cannot be answered using the information provided answer with "Sorry, but I can't provide an answer".
-"""
-model_prompt = PromptTemplate(input_variables = ['answer'], template=template)
+if chat_prompt is not None:
+    response = query_engine.query(str(chat_prompt))
+    template = """{answer}. \n".
+    """
+    model_prompt = PromptTemplate(input_variables = ['answer'], template=template)
+    with st.chat_message("user"):
+        st.write(f"Human: {chat_prompt}")
+    with st.chat_message("assistant"):
+        st.write(f"Assistant: {model_prompt.format(answer = response)}")
 
 #prompt = PromptTemplate.from_template(template)
-print(model_prompt.format(answer = response))
+#print(model_prompt.format(answer = response))
 
+
+
+
+    
