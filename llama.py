@@ -8,6 +8,7 @@ from langchain import PromptTemplate
 from llama_index import set_global_service_context
 import streamlit as st
 import pypdf 
+from streamlit_chat import message
 
 def read_pdf(file):
     pdf_reader = pypdf.PdfReader(file)
@@ -88,6 +89,13 @@ def load_index(dir_path):
 index = load_index('./docs_database')
 query_engine = index.as_query_engine()
 
+# nizovi poruka
+if 'generated' not in st.session_state:
+    st.session_state['generated'] = [ ]
+## past stores User's questions
+if 'past' not in st.session_state:
+    st.session_state['past'] = [ ]
+
 chat_prompt = st.chat_input("Ask a question")
 #pravljenje template-a za odgovor
 if chat_prompt is not None:
@@ -97,11 +105,14 @@ if chat_prompt is not None:
     \nFrom source: {file_source}
     """
     model_prompt = PromptTemplate(input_variables = ['answer', 'file_source'], template=template)
-    with st.chat_message("user"):
-        st.write(f"Human: {chat_prompt}")
-    with st.chat_message("assistant"):
-        if response:
-            st.write(f"Assistant: {model_prompt.format(answer = response, file_source = file_source)}")
+   
+    st.session_state.past.append(chat_prompt)
+    st.session_state.generated.append(model_prompt.format(answer = response, file_source = file_source))
+        
+    if st.session_state['generated']:
+        for i in range(len(st.session_state['generated'])):
+            message(st.session_state['past'][i], is_user=True, key=str(i) + '_user')
+            message(st.session_state["generated"][i], key=str(i))
 
 
 
