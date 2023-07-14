@@ -10,7 +10,7 @@ import streamlit as st
 
 #file loader 
 st.title("Sova demo app")
-uploaded_file = st.file_uploader("Choose a file")
+uploaded_file = st.file_uploader("Choose a file or multiple files")
 if uploaded_file is not None:
     st.write("File loaded")
 
@@ -38,7 +38,11 @@ def find_source(response):
         if node.score > max_score:
             max_score = node.score
             source = node
-    return source
+        if source.score> 0.3:
+            return source.node.metadata.get('filename')
+        else:
+            return "General Knowledge. Cannot verify source."
+        
 #kreiranje indeksa pri prvom pozivu i updatovanje kasnije
 def load_index(dir_path):
     documents = SimpleDirectoryReader(dir_path, filename_as_id=True, file_metadata=file_metadata).load_data()
@@ -65,7 +69,7 @@ chat_prompt = st.chat_input("Ask a question")
 #pravljenje template-a za odgovor
 if chat_prompt is not None:
     response = query_engine.query(str(chat_prompt))
-    file_source = find_source(response).node.metadata.get('filename')
+    file_source = find_source(response)
     template = """{answer}
     \nFrom source: {file_source}
     """
@@ -75,9 +79,6 @@ if chat_prompt is not None:
     with st.chat_message("assistant"):
         if response:
             st.write(f"Assistant: {model_prompt.format(answer = response, file_source = file_source)}")
-
-#prompt = PromptTemplate.from_template(template)
-#print(model_prompt.format(answer = response))
 
 
 
