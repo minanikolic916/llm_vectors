@@ -14,12 +14,15 @@ uploaded_file = st.file_uploader("Choose a file")
 if uploaded_file is not None:
     st.write("File loaded")
 
+temperature_value = st.slider('Please select the model temperature:', 0.0, 1.0, 0.5)
+st.write('Current temperature:', temperature_value)
+
 #odabir modela 
 access_token = "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"
 repo_id = "google/flan-t5-base"
 llm_predictor = LLMPredictor(llm = HuggingFaceHub(
     repo_id=repo_id, 
-    model_kwargs= {"temperature": 0.5, "max_length": 64},
+    model_kwargs= {"temperature": temperature_value, "max_length": 64},
     huggingfacehub_api_token= access_token
 ))
 embed_model = LangchainEmbedding(HuggingFaceEmbeddings())
@@ -61,7 +64,8 @@ chat_prompt = st.chat_input("Ask a question")
 if chat_prompt is not None:
     response = query_engine.query(str(chat_prompt))
     file_source = find_source(response).node.metadata.get('filename')
-    template = """{answer}, from source: {file_source}
+    template = """{answer}
+    From source: {file_source}
     """
     model_prompt = PromptTemplate(input_variables = ['answer', 'file_source'], template=template)
     with st.chat_message("user"):
