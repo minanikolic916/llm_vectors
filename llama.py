@@ -57,7 +57,8 @@ if chat_prompt is not None:
     with st.chat_message("user"):
         st.write(f"Human: {chat_prompt}")
     with st.chat_message("assistant"):
-        st.write(f"Assistant: {model_prompt.format(answer = response)}")
+        if response:
+            st.write(f"Assistant: {model_prompt.format(answer = response)}")
 
 #prompt = PromptTemplate.from_template(template)
 #print(model_prompt.format(answer = response))
