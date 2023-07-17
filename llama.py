@@ -46,7 +46,7 @@ st.write('Current temperature:', temperature_value)
 def model_and_embd():
     #odabir modela 
     access_token = "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"
-    repo_id = "google/flan-t5-base"
+    repo_id = "google/flan-t5-small"
     llm_predictor = LLMPredictor(llm = HuggingFaceHub(
     repo_id=repo_id, 
     model_kwargs= {"temperature": temperature_value, "max_length": 64},
@@ -72,6 +72,7 @@ def find_source(response):
             return "General Knowledge. Cannot verify source."
         
 #kreiranje indeksa pri prvom pozivu i updatovanje kasnije
+@st.cache_resource
 def load_index(dir_path):
     documents = SimpleDirectoryReader(dir_path, filename_as_id=True, file_metadata=file_metadata).load_data()
     try:
