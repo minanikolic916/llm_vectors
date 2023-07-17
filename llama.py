@@ -42,17 +42,20 @@ for uploaded_file in uploaded_files:
 temperature_value = st.slider('Please select the model temperature:', 0.0, 1.0, 0.5)
 st.write('Current temperature:', temperature_value)
 
-#odabir modela 
-access_token = "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"
-repo_id = "google/flan-t5-base"
-llm_predictor = LLMPredictor(llm = HuggingFaceHub(
+@st.cache_resource
+def model_and_embd():
+    #odabir modela 
+    access_token = "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"
+    repo_id = "google/flan-t5-base"
+    llm_predictor = LLMPredictor(llm = HuggingFaceHub(
     repo_id=repo_id, 
     model_kwargs= {"temperature": temperature_value, "max_length": 64},
     huggingfacehub_api_token= access_token
-))
-embed_model = LangchainEmbedding(HuggingFaceEmbeddings())
-service_context = ServiceContext.from_defaults(llm_predictor= llm_predictor, embed_model=embed_model)
-set_global_service_context(service_context)
+    ))
+    embed_model = LangchainEmbedding(HuggingFaceEmbeddings())
+    service_context = ServiceContext.from_defaults(llm_predictor= llm_predictor, embed_model=embed_model)
+    set_global_service_context(service_context)
+
 #za nalazenje source-a odakle je response 
 file_metadata = lambda x : {"filename": x}
 def find_source(response):
@@ -62,6 +65,7 @@ def find_source(response):
         if node.score > max_score:
             max_score = node.score
             source = node
+            print(max_score)
         if source.score> 0.3:
             return source.node.metadata.get('filename')
         else:
@@ -76,7 +80,8 @@ def load_index(dir_path):
         print("Index loaded from storage")
     except FileNotFoundError:
         #pravimo indeks od nule samo pri prvom pozivu
-        index = VectorStoreIndex.from_documents(documents, service_context=service_context)
+        model_and_embd()
+        index = VectorStoreIndex.from_documents(documents)
         index.set_index_id("sova_vector_index")
         index.storage_context.persist()
         print("New index created")
@@ -98,7 +103,8 @@ if 'past' not in st.session_state:
 
 chat_prompt = st.chat_input("Ask a question")
 #pravljenje template-a za odgovor
-if chat_prompt is not None:
+
+def generate_response():
     response = query_engine.query(str(chat_prompt))
     file_source = find_source(response)
     template = """{answer}
@@ -114,7 +120,8 @@ if chat_prompt is not None:
             message(st.session_state['past'][i], is_user=True, key=str(i) + '_user')
             message(st.session_state["generated"][i], key=str(i))
 
-
+if chat_prompt is not None:
+    generate_response()
 
 
     
